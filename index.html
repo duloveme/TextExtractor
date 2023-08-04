@@ -3,6 +3,21 @@
     <title>Image Text Extraction</title>
     <style>
       /* Add necessary styles here */
+    #dropzone {
+        width: 400px;
+        height: 300px;
+        border: 5px dashed #ddd;
+        text-align: center;
+        padding-top: 140px;
+        margin: auto;
+        font-size: 20px;
+        color: #ccc;
+        transition: background-color 0.3s ease;
+    }
+
+    #dropzone.dragover {
+        background-color: #eee;
+    }
     </style>
   </head>
   <body>
@@ -17,7 +32,7 @@
       let ctx = canvas.getContext('2d');
       
       function onOpenCvReady() {
-        document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+        document.getElementById('result').innerHTML = 'OpenCV.js is ready.';
       }
       
       // Handle image drop
@@ -45,26 +60,57 @@
       });
 
       function processImage(src) {
-        let gray = new cv.Mat();
-        let thresholded = new cv.Mat();
-        let M = cv.Mat.ones(5, 5, cv.CV_8U);
-        let anchor = new cv.Point(-1, -1);
+            let gray = new cv.Mat();
+            let thresholded = new cv.Mat();
+            let M = cv.Mat.ones(5, 5, cv.CV_8U);
+            let anchor = new cv.Point(-1, -1);
 
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-        cv.threshold(gray, thresholded, 120, 200, cv.THRESH_BINARY);
-        cv.morphologyEx(thresholded, thresholded, cv.MORPH_OPEN, M, anchor, 2);
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+            cv.threshold(gray, thresholded, 120, 200, cv.THRESH_BINARY);
+            cv.morphologyEx(thresholded, thresholded, cv.MORPH_OPEN, M, anchor, 2);
 
-        // Here you can pass the thresholded image to Tesseract for OCR
-        // Tesseract.recognize(thresholded).then(function(result){
-        //     console.log(result);
-        // })
+            // Create image for tesseract
+            let ocrImage = new cv.Mat();
+            cv.cvtColor(thresholded, ocrImage, cv.COLOR_GRAY2RGBA);
 
-        // Cleanup
-        src.delete();
-        gray.delete();
-        thresholded.delete();
-        M.delete();
-      }
+            // OCR with Tesseract
+            Tesseract.recognize(ocrImage.data, 'eng', { logger: m => console.log(m) }).then(({ data: { text, blocks } }) => {
+                // Clear previous results
+                document.getElementById("result").innerHTML = "";
+
+                // Create a list for results
+                let resultList = document.createElement("ul");
+
+                // Darken the entire image
+                let alpha = src.type() === cv.CV_8UC4 ? 0.5 : 0.2;
+                src.convertTo(src, -1, alpha, 0);
+
+                // Iterate over text blocks
+                blocks.forEach(block => {
+                    // Add text to results
+                    let listItem = document.createElement("li");
+                    listItem.innerText = block.text;
+                    resultList.appendChild(listItem);
+
+                    // Draw rectangle for each text block
+                    let rectColor = new cv.Scalar(255, 255, 255);
+                    let point1 = new cv.Point(block.bbox.x0, block.bbox.y0);
+                    let point2 = new cv.Point(block.bbox.x1, block.bbox.y1);
+                    cv.rectangle(src, point1, point2, rectColor, 2, cv.LINE_8, 0);
+                });
+
+                // Add the result list to the results div
+                document.getElementById("result").appendChild(resultList);
+
+                // Display the image
+                cv.imshow('canvas', src);
+            });
+
+            // Cleanup
+            gray.delete();
+            thresholded.delete();
+            M.delete();
+        }
     </script>
   </body>
 </html>
