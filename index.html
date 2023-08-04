@@ -1,0 +1,70 @@
+<html>
+  <head>
+    <title>Image Text Extraction</title>
+    <style>
+      /* Add necessary styles here */
+    </style>
+  </head>
+  <body>
+    <div id="dropzone">Drop an image or paste from clipboard here</div>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="result"></div>
+    <script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+    <script src="https://unpkg.com/tesseract.js"></script>
+    <script>
+      let dropzone = document.getElementById('dropzone');
+      let canvas = document.getElementById('canvas');
+      let ctx = canvas.getContext('2d');
+      
+      function onOpenCvReady() {
+        document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+      }
+      
+      // Handle image drop
+      dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        let file = e.dataTransfer.files[0];
+        createImageBitmap(file).then(function (img) {
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          let src = cv.imread(canvas);
+          processImage(src);
+        });
+      });
+
+      // Handle image paste
+      document.addEventListener('paste', function (e) {
+        let items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf("image") === -1) continue;
+          createImageBitmap(items[i].getAsFile()).then(function (img) {
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            let src = cv.imread(canvas);
+            processImage(src);
+          });
+        }
+      });
+
+      function processImage(src) {
+        let gray = new cv.Mat();
+        let thresholded = new cv.Mat();
+        let M = cv.Mat.ones(5, 5, cv.CV_8U);
+        let anchor = new cv.Point(-1, -1);
+
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+        cv.threshold(gray, thresholded, 120, 200, cv.THRESH_BINARY);
+        cv.morphologyEx(thresholded, thresholded, cv.MORPH_OPEN, M, anchor, 2);
+
+        // Here you can pass the thresholded image to Tesseract for OCR
+        // Tesseract.recognize(thresholded).then(function(result){
+        //     console.log(result);
+        // })
+
+        // Cleanup
+        src.delete();
+        gray.delete();
+        thresholded.delete();
+        M.delete();
+      }
+    </script>
+  </body>
+</html>
