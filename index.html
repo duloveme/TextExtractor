@@ -22,6 +22,7 @@
   </head>
   <body>
     <div id="dropzone">Drop an image or paste from clipboard here</div>
+    <input type="file" id="fileInput" accept="image/*">
     <canvas id="canvas" style="display:none;"></canvas>
     <div id="result"></div>
     <script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
@@ -35,6 +36,17 @@
         document.getElementById('result').innerHTML = 'OpenCV.js is ready.';
       }
       
+      document.getElementById('fileInput').addEventListener('change', function (e) {
+            let file = e.target.files[0];
+            createImageBitmap(file).then(function (img) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                let src = cv.imread(canvas);
+                processImage(src);
+            });
+        });
       // Handle image drop
       dropzone.addEventListener('drop', function (e) {
         e.preventDefault();
