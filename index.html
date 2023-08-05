@@ -56,7 +56,6 @@
       }
       
       document.getElementById('fileInput').addEventListener('change', function (e) {
-            alert("file uploaded");
             //canvas.setAttribute("display", "block");
             let file = e.target.files[0];
             createImageBitmap(file).then(function (img) {
@@ -102,22 +101,33 @@
       });
 
       function processImage(src) {
-            alert("processImage");
-            let gray = new cv.Mat();
-            let thresholded = new cv.Mat();
-            let M = cv.Mat.ones(5, 5, cv.CV_8U);
-            let anchor = new cv.Point(-1, -1);
+            // alert("processImage");
+            // let gray = new cv.Mat();
+            // let thresholded = new cv.Mat();
+            // let M = cv.Mat.ones(5, 5, cv.CV_8U);
+            // let anchor = new cv.Point(-1, -1);
 
-            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-            cv.threshold(gray, thresholded, 120, 200, cv.THRESH_BINARY);
-            cv.morphologyEx(thresholded, thresholded, cv.MORPH_OPEN, M, anchor, 2);
+            // cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+            // cv.threshold(gray, thresholded, 120, 200, cv.THRESH_BINARY);
+            // cv.morphologyEx(thresholded, thresholded, cv.MORPH_OPEN, M, anchor, 2);
 
             // Create image for tesseract
-            let ocrImage = new cv.Mat();
-            cv.cvtColor(thresholded, ocrImage, cv.COLOR_GRAY2RGBA);
+            // let ocrImage = new cv.Mat();
+            // cv.cvtColor(thresholded, ocrImage, cv.COLOR_GRAY2RGBA);
 
+            // let imageData = ctx.createImageData(ocrImage.cols, ocrImage.rows);
+            // for (let i = 0; i < ocrImage.data.length; i += 4) {
+            //     imageData.data[i] = ocrImage.data[i+2];
+            //     imageData.data[i + 1] = ocrImage.data[i+1];
+            //     imageData.data[i + 2] = ocrImage.data[i];
+            //     imageData.data[i + 3] = 255;  // Alpha channel
+            // }
+            // ctx.putImageData(imageData, 0, 0);
+            
+            
+            //console.log(ocrImage.data);
             // OCR with Tesseract
-            Tesseract.recognize(ocrImage.data, 'eng', { logger: m => console.log(m) }).then(({ data: { text, blocks } }) => {
+            Tesseract.recognize(canvas.toDataURL(), 'eng+kor', { logger: m => console.log(m) }).then(({ data: { text, blocks } }) => {
                 // Clear previous results
                 document.getElementById("result").innerHTML = "";
 
