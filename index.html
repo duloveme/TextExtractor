@@ -93,6 +93,7 @@
       });
 
       function processImage(src) {
+            alert("processImage");
             let gray = new cv.Mat();
             let thresholded = new cv.Mat();
             let M = cv.Mat.ones(5, 5, cv.CV_8U);
